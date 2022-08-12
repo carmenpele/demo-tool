@@ -80,10 +80,11 @@ public class RatesThread implements Runnable {
     rateAccessRQ.setRatePlanCodes(rate.getRatePlanCodes());
 
     RestTemplate restTemplate = new RestTemplate();
-    //String urlNew = "https://hotel-at-negotiated-rates-hccd-dev.ocp-a.hc1.nonprod.travelport.io:443/hotel-at-negotiated-rates/rates";
-    String urlNew = "http://localhost:8045/rates";
+    String urlNew = "https://hotel-at-negotiated-rates-hccd-dev.ocp-a.hc1.nonprod.travelport.io:443/hotel-at-negotiated-rates/rates";
+    //String urlNew = "http://localhost:8045/rates";
+    String urlOld = "http://hotelrateplanres.pp.tvlport.com:50054/rates";
     //String urlOld = "http://vhlppdobe059.tvlport.net:50054/rates";
-    String urlOld = "http://localhost:50054/rates";
+   // String urlOld = "http://localhost:50054/rates";
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_XML);
 
@@ -101,7 +102,7 @@ public class RatesThread implements Runnable {
     //System.out.println("al doilea call- entityOld- " + (System.currentTimeMillis()-localStartEntityOld));
 
     boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), fileWrite, rate.getPcc());
-    //System.out.println(threadName+" : "+rate.getPcc()+" "+rate.getChains().getChainCode()+" "+rate.getRatePlanCodes().getRatePlanCode()+" -> "+result);
+    System.out.println(threadName+" : "+rate.getPcc()+" "+rate.getChains().getChainCode()+" "+rate.getRatePlanCodes().getRatePlanCode()+" -> "+result);
   }
 
   public void start() {

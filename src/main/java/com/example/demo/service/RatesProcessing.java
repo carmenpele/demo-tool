@@ -22,7 +22,8 @@ public class RatesProcessing {
           if (rateAccessCodeType.isUserAllowed() != getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
               rateAccessCodeType.getRatePlanCode()).isUserAllowed()) {
             System.out.println("DIFFERENT RESULT: " + rateAccessRS1.getPseudoCityCode() + " " + rateAccessDetail.getChainCode() + " "
-                + rateAccessCodeType.getRatePlanCode() + " -> " + false);
+                + rateAccessCodeType.getRatePlanCode() + " -> " + rateAccessCodeType.isUserAllowed()+" , "+getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
+                rateAccessCodeType.getRatePlanCode()).isUserAllowed());
             fileWrite.writeText(
                 rateAccessRS1.getPseudoCityCode() + " " + rateAccessDetail.getChainCode() + " " + rateAccessCodeType.getRatePlanCode() + " -> "
                     + false + "\n");

@@ -56,10 +56,9 @@ public class RatesService {
     List<List<String>> chainsSplitted = Lists.partition(chains, numberOfChains);
     List<List<String>> ratePlanCodesSplitted = Lists.partition(ratePlanCodes, numberOfRates);
 
-    for (int i = 0; i < 4; i++) {
-      RatesThread ratesThread = new RatesThread("thread " + i + " ", pccsSplitted.get(0), chainsSplitted, ratePlanCodesSplitted);
+    for (int i = 0; i < 10; i++) {
+      RatesThread ratesThread = new RatesThread("thread " + i + " ", pccsSplitted.get(i), chainsSplitted, ratePlanCodesSplitted);
       ratesThread.start();
-
     }
 
     System.out.println("done");
@@ -83,7 +82,8 @@ public class RatesService {
     RestTemplate restTemplate = new RestTemplate();
     String urlNew = "https://hotel-at-negotiated-rates-hccd-dev.ocp-a.hc1.nonprod.travelport.io:443/hotel-at-negotiated-rates/rates";
     //String urlNew = "http://localhost:8045/rates";
-    String urlOld = "http://vhlppdobe059.tvlport.net:50054/rates";
+    String urlOld = "http://hotelrateplanres.pp.tvlport.com:50054/rates";
+    //String urlOld = "http://vhlppdobe059.tvlport.net:50054/rates";
     //String urlOld = "http://localhost:50054/rates";
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_XML);
