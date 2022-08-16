@@ -18,4 +18,15 @@ public class FileReading {
     csvReader.close();
     return list;
   }
+  public static ArrayList<String> readPCCs() throws IOException {
+    return FileReading.readFromFile("C:/Users/carmen.pele/Documents/GitHub/Hotels/Repos/demo/src/files/pcc.csv");
+  }
+
+  public static ArrayList<String> readChains() throws IOException {
+    return FileReading.readFromFile("C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/chains.csv");
+  }
+
+  public static ArrayList<String> readRatePlanCodes() throws IOException {
+    return FileReading.readFromFile("C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/ratePlanCode.csv");
+  }
 }

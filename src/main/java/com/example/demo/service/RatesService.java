@@ -1,12 +1,12 @@
 package com.example.demo.service;
 
-import static com.example.demo.CodesFromFiles.readChains;
-import static com.example.demo.CodesFromFiles.readPCCs;
-import static com.example.demo.CodesFromFiles.readRatePlanCodes;
+import static com.example.demo.service.FileReading.readChains;
+import static com.example.demo.service.FileReading.readPCCs;
+import static com.example.demo.service.FileReading.readRatePlanCodes;
 
-import com.example.demo.model.RatesStructure;
 import com.google.common.collect.Lists;
 import com.travelport.rates.RateAccessRQ;
+import com.travelport.rates.RateAccessRS;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,25 +44,20 @@ public class RatesService {
     return rateAccessRS;
   }
 
-  public String comparewithGeneratedRateStructures(int numberOfChains, int numberOfRates) throws IOException {
-    List<RatesStructure> rates = new ArrayList<RatesStructure>();
+  public void compare() throws IOException {
 
     //extract the codel from files
     ArrayList<String> pccs = readPCCs();
     ArrayList<String> chains = readChains();
     ArrayList<String> ratePlanCodes = readRatePlanCodes();
     //splitting the lists
-    List<List<String>> pccsSplitted = Lists.partition(pccs, 5);
-    List<List<String>> chainsSplitted = Lists.partition(chains, numberOfChains);
-    List<List<String>> ratePlanCodesSplitted = Lists.partition(ratePlanCodes, numberOfRates);
+    List<List<String>> pccsSplitted = Lists.partition(pccs, 100);
 
     for (int i = 0; i < 10; i++) {
-      RatesThread ratesThread = new RatesThread("thread " + i + " ", pccsSplitted.get(i), chainsSplitted, ratePlanCodesSplitted);
+      RatesThread ratesThread = new RatesThread("thread " + i + " ", pccsSplitted.get(i), chains, ratePlanCodes);
       ratesThread.start();
     }
 
-    System.out.println("done");
-    return "done";
   }
 
   public void compareWithCustomNumbersOfCodes(int numberOfChains, int numberOfRates) throws IOException {
@@ -88,7 +83,6 @@ public class RatesService {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_XML);
 
-    FileWrite fileWrite = new FileWrite();
     for (String pcc : pccs) {
 
       rateAccessRQ.setPseudoCityCode(pcc);
@@ -121,13 +115,12 @@ public class RatesService {
               com.travelport.rates.RateAccessRS.class, 100);
           //System.out.println("al doilea call- entityOld- " + (System.currentTimeMillis()-localStartEntityOld));
 
-          boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), fileWrite, pcc);
+          boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), pcc);
           //System.out.println("AB1"+" "+chain+" "+ratePlanCode+" => "+result);
 
         }
       }
     }
-    fileWrite.close();
   }
 
   public void compareAll() throws IOException {
@@ -140,7 +133,6 @@ public class RatesService {
 
     com.travelport.rates.RateAccessRQ rateAccessRQ = new com.travelport.rates.RateAccessRQ();
 
-    FileWrite fileWrite = new FileWrite();
 
     ArrayList<String> pccs = readPCCs();
     ArrayList<String> chains = readChains();
@@ -177,13 +169,31 @@ public class RatesService {
               com.travelport.rates.RateAccessRS.class, 100);
           System.out.println("al doilea call- entityOld- " + (System.currentTimeMillis() - localStartEntityOld));
 
-          boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), fileWrite, pcc);
+          boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), pcc);
           System.out.println("AB1" + " " + chain + " " + ratePlanCode + " => " + result);
         }
       }
     }
-
-    fileWrite.close();
   }
+  public List<RateAccessRS> seeResponses(RateAccessRQ rateAccessRQ) throws IOException {
+    List<RateAccessRS> results=new ArrayList<>();
 
+    RestTemplate restTemplate = new RestTemplate();
+    String urlNew = "https://hotel-at-negotiated-rates-hccd-dev.ocp-a.hc1.nonprod.travelport.io:443/hotel-at-negotiated-rates/rates";
+    String urlOld = "http://vhlppdobe059.tvlport.net:50054/rates";
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_XML);
+    long localStartEntityNew = System.currentTimeMillis();
+    HttpEntity<RateAccessRQ> entity = new HttpEntity<>(rateAccessRQ, headers);
+    ResponseEntity<com.travelport.rates.RateAccessRS> rateEntityNew = restTemplate.exchange(urlNew, HttpMethod.POST, entity,
+        com.travelport.rates.RateAccessRS.class, 100);
+    long localStartEntityOld = System.currentTimeMillis();
+    ResponseEntity<com.travelport.rates.RateAccessRS> rateEntityOld = restTemplate.exchange(urlOld, HttpMethod.POST, entity,
+        com.travelport.rates.RateAccessRS.class, 100);
+
+    results.add(rateEntityNew.getBody());
+    results.add(rateEntityOld.getBody());
+    boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), rateAccessRQ.getPseudoCityCode());
+    return results;
+  }
 }
