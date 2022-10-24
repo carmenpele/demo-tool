@@ -4,41 +4,70 @@ import com.travelport.rates.RateAccessCodeType;
 import com.travelport.rates.RateAccessDetailType;
 import com.travelport.rates.RateAccessRS;
 import java.io.IOException;
-import java.util.stream.Collectors;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.stereotype.Service;
 
 @Log4j2
 public class RatesProcessing {
 
   public static boolean compareResponses(com.travelport.rates.RateAccessRS rateAccessRS1, com.travelport.rates.RateAccessRS rateAccessRS2, String pcc)
       throws IOException {
-    if (rateAccessRS1.getStatus().getMessage().equals("Success") && rateAccessRS1.getStatus().getMessage().equals("Success")) {
+    if (rateAccessRS1.getStatus().getMessage().equals("Success") && rateAccessRS2.getStatus().getMessage().equals("Success")) {
       for (RateAccessDetailType rateAccessDetail : rateAccessRS1.getRateAccessDetails().getRateAccessDetail()) {
         for (RateAccessCodeType rateAccessCodeType : rateAccessDetail.getRateAccessCodes().getRateAccessCode()) {
           if (getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(), rateAccessCodeType.getRatePlanCode()) == null) {
-            //System.out.println("PCC NOT FOUND IN OLD APP: " + rateAccessRS1.getPseudoCityCode() + " -> " + false);
-           // log.info("NULL RATE DETAILS IN OLD APP: " + rateAccessRS1.getPseudoCityCode() + " "+rateAccessDetail.getChainCode()+" "+ rateAccessCodeType.getRatePlanCode()+" -> " + false);
+            log.info("M1 MASTER CHAIN PROBLEM : pcc- " + pcc + " chains ("
+                + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getChainCode() + " "
+                + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(1).getChainCode() + " "
+                + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(2).getChainCode() + " "
+                + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(3).getChainCode() + " "
+                + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(4).getChainCode()
+                + ") ratePlanCodes-(" + rateAccessDetail.getRateAccessCodes().getRateAccessCode().get(0).getRatePlanCode() + " "
+                + rateAccessDetail.getRateAccessCodes().getRateAccessCode().get(1).getRatePlanCode() + " "
+                + rateAccessDetail.getRateAccessCodes().getRateAccessCode().get(2).getRatePlanCode() + " "
+                + rateAccessDetail.getRateAccessCodes().getRateAccessCode().get(3).getRatePlanCode() + " "
+                + rateAccessDetail.getRateAccessCodes().getRateAccessCode().get(4).getRatePlanCode() + ")");
             return false;
           }
           if (rateAccessCodeType.isUserAllowed() != getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
-              rateAccessCodeType.getRatePlanCode()).isUserAllowed()) {
-            log.info("DIFFERENT RESULT: " + pcc + " " + rateAccessDetail.getChainCode() + " "
-                + rateAccessCodeType.getRatePlanCode() + " -> NEW- " + rateAccessCodeType.isUserAllowed() + " , OLD-"
-                + getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
-                rateAccessCodeType.getRatePlanCode()).isUserAllowed());
-
+                                                                                rateAccessCodeType.getRatePlanCode()).isUserAllowed()) {
+            if ("MC,RC,FN,BR,ET,TO,XV,CY,VC,EE,AK,EB,AR,GE,OX,RZ,DE,PR,SI,WI,WH,MD,LC,XR,AL,EL,GX,TX".contains(rateAccessDetail.getChainCode())) {
+              log.info("MARRIOTT CHAIN CODE : " + pcc + " " + rateAccessDetail.getChainCode() + " "
+                  + rateAccessCodeType.getRatePlanCode() + " -> NEW- " + rateAccessCodeType.isUserAllowed() + " , OLD-"
+                  + getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
+                  rateAccessCodeType.getRatePlanCode()).isUserAllowed());
+            } else if ("AN,CP,IC,IN,HI,SP,VN,YO,YZ,UL".contains(rateAccessDetail.getChainCode())) {
+              log.info("IHG CHAIN CODE : " + pcc + " " + rateAccessDetail.getChainCode() + " "
+                  + rateAccessCodeType.getRatePlanCode() + " -> NEW- " + rateAccessCodeType.isUserAllowed() + " , OLD-"
+                  + getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
+                  rateAccessCodeType.getRatePlanCode()).isUserAllowed());
+            } else {
+              log.info("DIFFERENT RESULT: " + pcc + " " + rateAccessDetail.getChainCode() + " "
+                  + rateAccessCodeType.getRatePlanCode() + " -> NEW- " + rateAccessCodeType.isUserAllowed() + " , OLD-"
+                  + getRateAccessCodeTypeFromRateAccessRS(rateAccessRS2, rateAccessDetail.getChainCode(),
+                  rateAccessCodeType.getRatePlanCode()).isUserAllowed());
+            }
             return false;
           }
         }
       }
     } else {
-      log.info(
-          "UNSUCCESSFUL STATUS: " + pcc + " -> " + false + " NEW: " + rateAccessRS1.getStatus().getMessage() + " OLD: " + rateAccessRS2.getStatus()
-              .getMessage());
+//      log.info(
+//          "UNSUCCESSFUL STATUS: " + pcc + " -> " + false + " NEW: " + rateAccessRS1.getStatus().getMessage() + " OLD: " + rateAccessRS2.getStatus()
+//              .getMessage());
 
       return false;
     }
+//    log.info(pcc + " chains ("
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getChainCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(1).getChainCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(2).getChainCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(3).getChainCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(4).getChainCode()
+//        + ") ratePlanCodes-(" + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(0).getRatePlanCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(1).getRatePlanCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(2).getRatePlanCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(3).getRatePlanCode() + " "
+//        + rateAccessRS1.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(4).getRatePlanCode() + ") ->true");
     return true;
 
   }
@@ -48,20 +77,13 @@ public class RatesProcessing {
     if (rateAccessRS.getRateAccessDetails() == null) {
       return null;
     }
-    RateAccessCodeType result=null;
-    try{
-     result=rateAccessRS.getRateAccessDetails().getRateAccessDetail().stream().filter(r -> {
-               if (!r.getChainCode().equals(chainCode)) {
-                 return false;
-               }
-               r.getRateAccessCodes().getRateAccessCode().stream().filter(ra -> ra.getRatePlanCode().equals(ratePlanCode));
-               return true;
-             }
-         ).collect(Collectors.toList()).get(0).getRateAccessCodes().getRateAccessCode().stream().filter(rac -> rac.getRatePlanCode().equals(ratePlanCode))
-         .collect(Collectors.toList()).get(0);
-    }catch(Exception exception){
-      log.info("NULL RATE DETAILS IN OLD APP:"+rateAccessRS.getPseudoCityCode()+" "+chainCode+" "+ratePlanCode+" * "+rateAccessRS.getRateAccessDetails().getRateAccessDetail().get(0).getRateAccessCodes().getRateAccessCode().get(0).getRatePlanCode());
+    for (RateAccessDetailType rateAccessDetail : rateAccessRS.getRateAccessDetails().getRateAccessDetail()) {
+      for (RateAccessCodeType rateAccessCodeType : rateAccessDetail.getRateAccessCodes().getRateAccessCode()) {
+        if (chainCode.equals(rateAccessDetail.getChainCode()) && rateAccessCodeType.getRatePlanCode().equals(ratePlanCode)) {
+          return rateAccessCodeType;
+        }
+      }
     }
-    return result;
+    return null;
   }
 }

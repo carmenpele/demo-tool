@@ -1,0 +1,111 @@
+WARNING!!!
+*******************************************************************************************************************************************************************************************************************************************
+* Since it's  multi-threading, some threads will crash, but you will see some results, it depends on the number of codes and the number of threads that start at the same time.                                                           *
+*	to prevent this, you can change these lines:                                                                                                                                                 										  *
+*		List<List<String>> pccsSplitted = Lists.partition(pccs, 150); <- change the size from 150 to a smaller number, this will represent the number of pccs that every thread will use 												  *
+*		for (int i = 0; i < pccsSplitted.size(); i++) <- change the limit from pccsSplitted.size() to a smaller number, this will represent the number of threads that starts at the same time ( in my case there were 26 threads )		  *
+*																																																										  *
+*******************************************************************************************************************************************************************************************************************************************
+
+-> http://localhost:8086/rates/seeResponses
+	Body:
+	    <RateAccessRQ GdsContext="1G" PseudoCityCode="B5A" CorrelationId="tesssst" xmlns="http://www.travelport.com/rates">
+			<ChainCodes>
+				<ChainCode>M1</ChainCode>
+			</ChainCodes>
+			<RatePlanCodes>
+				<RatePlanCode>EML1</RatePlanCode>
+			</RatePlanCodes>
+		</RateAccessRQ>
+		
+	Response:
+		[
+			{
+				"status": {
+					"code": "001",
+					"message": "Success"
+				},
+				"rateAccessDetails": {
+					"rateAccessDetail": [
+						{
+							"rateAccessCodes": {
+								"rateAccessCode": [
+									{
+										"userAllowed": false,
+										"ratePlanCode": "EML1",
+										"alternateRatePlanCode": null,
+										"ratePlanID": null,
+										"statusCode": "002",
+										"statusMessage": "RatePlanCode Not Found"
+									}
+								]
+							},
+							"chainCode": "M1"
+						}
+					]
+				},
+				"gdsContext": "1G",
+				"pseudoCityCode": "B5A",
+				"correlationId": null
+			},
+			{
+				"status": {
+					"code": "200",
+					"message": "Success"
+				},
+				"rateAccessDetails": {
+					"rateAccessDetail": [
+						{
+							"rateAccessCodes": {
+								"rateAccessCode": [
+									{
+										"userAllowed": false,
+										"ratePlanCode": "EML1",
+										"alternateRatePlanCode": null,
+										"ratePlanID": null,
+										"statusCode": "002",
+										"statusMessage": "RatePlanCode Not Found"
+									}
+								]
+							},
+							"chainCode": "M1"
+						}
+					]
+				},
+				"gdsContext": "1G",
+				"pseudoCityCode": "B5A",
+				"correlationId": "tesssst"
+			}
+		]
+	First one is from the New Nego Rate and the second one is from the old one.
+	
+-> COMPARE ALL
+http://localhost:8086/rates/compare?pccLink=C:/Users/carmen.pele/Documents/GitHub/Hotels/Repos/demo/src/files/pcc.csv&chainsLink=C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/chains.csv&ratePlanCodesLink=C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/ratePlanCode.csv
+
+OR 
+	http://localhost:8086/rates/compare
++ with QueryParams:
+		pccLink:C:/Users/carmen.pele/Documents/GitHub/Hotels/Repos/demo/src/files/pcc.csv
+		chainsLink:C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/chains.csv
+		ratePlanCodesLink:C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/ratePlanCode.csv
+		
+	As results you will see in the console only the cases that fails, with Pcc not found, Mariot/Hilton/IHG chain or cases where the response from the new and old one are different.
+	You can uncomment some lines if you want to see all the cases which the tool tests.
+	ex: 2022-10-24 21:17:24.802  INFO 21360 --- [     thread 34 ] c.example.demo.service.RatesProcessing   : IHG CHAIN CODE : 33UJ VN ROCN1 -> NEW- true , OLD-false
+		DIFFERENT RESULT: 3RI GA ENCOD -> NEW- false , OLD-true
+		MARRIOTT CHAIN CODE : 3O2C EB DRA -> NEW- false , OLD-true
+	
+	
+-> SEE ALL THE TRUE CASES
+http://localhost:8086/rates/seeTrueCases?pccLink=C:/Users/carmen.pele/Documents/GitHub/Hotels/Repos/demo/src/files/pcc.csv&chainsLink=C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/chains.csv&ratePlanCodesLink=C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/ratePlanCode.csv
+
+or 
+http://localhost:8086/rates/seeTrueCases
++ with QueryParams:
+		pccLink:C:/Users/carmen.pele/Documents/GitHub/Hotels/Repos/demo/src/files/pcc.csv
+		chainsLink:C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/chains.csv
+		ratePlanCodesLink:C:/Users/carmen.pele/Downloads/demo/demo/src/main/resources/ratePlanCode.csv
+	
+	You will see in the console the combinations of 1 pcc + 1 chainCode + 1 ratePlanCode, for which the response of nego rates contains userAllowed=true.
+	 
+	 ex: pcc 1T0D chain YO ratePlanCode BAS user_allowed=true

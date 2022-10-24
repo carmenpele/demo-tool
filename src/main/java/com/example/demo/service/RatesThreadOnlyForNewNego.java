@@ -18,7 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 @Log4j2
-public class RatesThread implements Runnable {
+public class RatesThreadOnlyForNewNego implements Runnable {
 
   private Thread thread;
   private String threadName;
@@ -26,7 +26,7 @@ public class RatesThread implements Runnable {
   private List<String> chains;
   private List<String> ratePlanCodes;
 
-  public RatesThread(String threadName, List<String> pccs, List<String> chains, List<String> ratePlanCodes) {
+  public RatesThreadOnlyForNewNego(String threadName, List<String> pccs, List<String> chains, List<String> ratePlanCodes) {
     this.pccs = pccs;
     this.chains = chains;
     this.ratePlanCodes = ratePlanCodes;
@@ -37,7 +37,7 @@ public class RatesThread implements Runnable {
   @Override
   public void run() {
     //System.out.println(threadName + " has started");
-    log.info("---------------thread " + threadName + " has started");
+    //log.info("---------------thread " + threadName + " has started");
     long localStart = System.currentTimeMillis();
 
     Random random = new Random();
@@ -66,7 +66,7 @@ public class RatesThread implements Runnable {
       }
 
     }
-    log.info("---------------thread " + threadName + " execution time {}ms", System.currentTimeMillis() - localStart);
+    //log.info("---------------thread " + threadName + " execution time {}ms", System.currentTimeMillis() - localStart);
     //System.out.println(threadName + " is finished");
   }
 
@@ -82,24 +82,28 @@ public class RatesThread implements Runnable {
     //String urlNew = "https://hotel-at-negotiated-rates-hccd-dev.ocp-a.hc1.nonprod.travelport.io:443/hotel-at-negotiated-rates/rates";
     //String urlNew = "http://localhost:8045/rates";
     String urlNew = "https://hotel-at-negotiated-rates-hccd-pn.ocp-a.hc1.prod.travelport.io/hotel-at-negotiated-rates/rates";
-    String urlOld = "http://hotelrateplanres.pp.tvlport.com:50054/rates";
-    //String urlOld = "http://vhlppdobe059.tvlport.net:50054/rates";
-    // String urlOld = "http://localhost:50054/rates";
+
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(MediaType.APPLICATION_XML);
 
     HttpEntity<RateAccessRQ> entity = new HttpEntity<>(rateAccessRQ, headers);
+    ResponseEntity<RateAccessRS> rateEntityNew = restTemplate.exchange(urlNew, HttpMethod.POST, entity, RateAccessRS.class, 100);
 
-    //long localStartEntityNew = System.currentTimeMillis();
-    ResponseEntity<RateAccessRS> rateEntityNew = restTemplate.exchange(urlNew, HttpMethod.POST, entity, com.travelport.rates.RateAccessRS.class, 100);
-    //System.out.println("primul call- entityNew- " + (System.currentTimeMillis()-localStartEntityNew));
+    if(rateEntityNew.getBody().getStatus().getMessage().equals("Success")) {
+      RateAccessRS rateAccessRS=rateEntityNew.getBody();
 
-    //long localStartEntityOld = System.currentTimeMillis();
-    ResponseEntity<com.travelport.rates.RateAccessRS> rateEntityOld = restTemplate.exchange(urlOld, HttpMethod.POST, entity,com.travelport.rates.RateAccessRS.class, 100);
-    //System.out.println("al doilea call- entityOld- " + (System.currentTimeMillis()-localStartEntityOld));
+      for (RateAccessDetailType rateAccessDetail : rateAccessRS.getRateAccessDetails().getRateAccessDetail()) {
+        for (RateAccessCodeType rateAccessCodeType : rateAccessDetail.getRateAccessCodes().getRateAccessCode()) {
+          if (rateAccessCodeType.isUserAllowed()){
+            System.out.println("pcc " + pcc
+                + " chain " + rateAccessDetail.getChainCode()
+                + " ratePlanCode " + rateAccessCodeType.getRatePlanCode()
+                +" user_allowed="+ rateAccessCodeType.isUserAllowed());
+          }
+        }
+      }
 
-    boolean result = RatesProcessing.compareResponses(rateEntityNew.getBody(), rateEntityOld.getBody(), pcc);
-
+   }
   }
 
   public void start() {
